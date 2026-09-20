@@ -1,0 +1,27 @@
+{
+  "summary": "Frontend visual/brand + motion regression test. Homepage loads cleanly with zero console errors. Brand mark is the new two-tone bT (teal b rgb(20,184,184) + charcoal T rgb(63,66,69)) with 'BITNEX TECHNOLOGIES' wordmark — old B-box removed. Primary CTA 'Start a project' is teal (rgb(20,184,184)). Reveal elements finish at opacity 1 (fade-up completes). Ecosystem shows .eco-orbit with 2 rings + svg.eco-lines with 6 dashed paths and 6 node cards. Capabilities section renders 3 cards with teal 01/02/03 numbers and teal check icons. Selected work: 'Systems imagined.' is teal, logistics concept card uses teal ellipse on light-teal background, commerce mini-bars are teal. Portal login shows bT mark; admin login succeeds, /portal sidebar active item 'Overview' + progress bars are teal (rgb(20,184,184)). No rgb(37,99,235) blue found in portal DOM.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "Hero H1", "issue": "The 'forward.' word in hero H1 is not rendered in teal — the <span>forward.</span> has no class/styling, computed color is rgb(32,38,43) charcoal. Spec explicitly required 'forward.' highlight to be teal. Add an accent class (e.g. .accent { color: var(--accent) }) to that span.", "selector": "h1 > span", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Apply teal accent styling to the 'forward.' <span> in the hero H1 (e.g. add class 'accent' and ensure it maps to var(--accent) #14B8B8) so it matches the pattern used for 'in sync.' and 'Systems imagined.'"
+  ],
+  "critical_code_review_comments": [
+    "IntersectionObserver reveals fire correctly — sampled .reveal elements resolve to opacity 1 without user interaction (hero) and once scrolled into view (capabilities/work). Good UX.",
+    "Ecosystem visual renders orbit rings + 6 dashed SVG paths as specified — dashed animation intended via stroke-dashoffset @keyframes; visually present in screenshot.",
+    "No console errors / warnings / page exceptions on / or /portal — previous lucide-react regression not reintroduced."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "95%"},
+  "test_credentials": "admin@bitnextechnologies.com / BitNexPortal2026!",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Teal rebrand (#14B8B8) verified across CTA, capabilities numbers/checks, work headline accent, logistics concept ellipse, commerce bars, portal sidebar active nav, and progress bars. Old blue rgb(37,99,235) and old B-box are fully gone. Only remaining gap vs spec is the hero 'forward.' span not styled teal — one small CSS/JSX fix in App.js."
+}
