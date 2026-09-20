@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="2" failures="0" skipped="0" tests="18" time="2.051" timestamp="2026-09-20T06:14:36.213538+00:00" hostname="agent-env-507d2586-0fee-4434-a38c-6ab7cd69fd52"><testcase classname="" name="tests.test_google_auth" time="0.000"><error message="collection failure">backend/tests/test_google_auth.py:20: in &lt;module&gt;
+    BASE_URL = os.environ['REACT_APP_BACKEND_URL'].rstrip('/')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen os&gt;:679: in __getitem__
+    ???
+E   KeyError: 'REACT_APP_BACKEND_URL'</error><error message="collection failure">backend/tests/test_google_auth.py:20: in &lt;module&gt;
+    BASE_URL = os.environ['REACT_APP_BACKEND_URL'].rstrip('/')
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+&lt;frozen os&gt;:679: in __getitem__
+    ???
+E   KeyError: 'REACT_APP_BACKEND_URL'</error></testcase><testcase classname="tests.backend_test" name="test_root" time="0.017" /><testcase classname="tests.backend_test" name="test_login_bad" time="0.251" /><testcase classname="tests.backend_test" name="test_me" time="0.274" /><testcase classname="tests.backend_test" name="test_unauth_portal" time="0.003" /><testcase classname="tests.backend_test" name="test_overview_has_data" time="0.047" /><testcase classname="tests.backend_test" name="test_list_projects" time="0.044" /><testcase classname="tests.backend_test" name="test_create_project" time="0.090" /><testcase classname="tests.backend_test" name="test_update_project" time="0.048" /><testcase classname="tests.backend_test" name="test_create_task" time="0.047" /><testcase classname="tests.backend_test" name="test_toggle_task" time="0.094" /><testcase classname="tests.backend_test" name="test_create_invoice" time="0.046" /><testcase classname="tests.backend_test" name="test_mark_invoice_paid" time="0.046" /><testcase classname="tests.backend_test" name="test_activity_reflects_actions" time="0.044" /><testcase classname="tests.backend_test" name="test_delete_task" time="0.044" /><testcase classname="tests.backend_test" name="test_delete_project_cascade" time="0.135" /><testcase classname="tests.backend_test" name="test_logout" time="0.043" /></testsuite></testsuites>
