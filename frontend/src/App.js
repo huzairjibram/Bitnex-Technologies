@@ -301,18 +301,74 @@ const capabilities = [
 
 const marqueeItems = ["AI Agents", "Voice AI", "SaaS Engineering", "Automation", "Cloud Architecture", "Commerce", "Custom Software", "Integrations", "Product Design", "Business Operations"];
 
-// Small inline visual for SaaS bento card
+// Small inline visual for SaaS bento card — animated modules assembling into a system
 function BuildingBlocks() {
+  const modules = [
+    { label: "Frontend", tag: "app", Icon: PanelTop, delay: 0.15 },
+    { label: "API", tag: "v3.2", Icon: Code2, delay: 0.3 },
+    { label: "Auth", tag: "OK", Icon: Check, delay: 0.45 },
+    { label: "Database", tag: "42ms", Icon: Layers3, delay: 0.6 },
+  ];
   return (
-    <div className="blocks" aria-hidden="true">
-      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-        <motion.span key={i} className={cx("block", (i === 1 || i === 4 || i === 5 || i === 7) && "block-teal")}
-          initial={{ opacity: 0, scale: 0.4 }} whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }} transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}
-        />
-      ))}
-      <motion.span className="blocks-badge" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.9 }}>
-        <span className="live-dot live-dot-green" /> 42 services live
+    <div className="modules" aria-hidden="true">
+      <div className="modules-grid" />
+      <svg className="modules-lines" viewBox="0 0 260 220" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="ml" x1="0" x2="1">
+            <stop offset="0" stopColor="#14B8B8" stopOpacity="0" />
+            <stop offset="0.5" stopColor="#14B8B8" stopOpacity="1" />
+            <stop offset="1" stopColor="#14B8B8" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        {[40, 80, 120, 160].map((y, i) => (
+          <line key={i} x1="70" y1={y + 12} x2="200" y2={y + 12} stroke="url(#ml)" strokeWidth="1.4" strokeDasharray="3 5">
+            <animate attributeName="stroke-dashoffset" values="0;-40" dur={`${2 + i * 0.3}s`} repeatCount="indefinite" />
+          </line>
+        ))}
+      </svg>
+
+      <div className="modules-stack">
+        {modules.map((m, i) => (
+          <motion.div key={m.label} className="module-row"
+            initial={{ opacity: 0, x: -14 }} whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-40px" }} transition={{ delay: m.delay, duration: 0.5 }}
+          >
+            <span className="module-icon"><m.Icon size={13} /></span>
+            <div className="module-meta">
+              <strong>{m.label}</strong>
+              <small>{["src/app", "handlers/*.ts", "sessions", "queries/*.sql"][i]}</small>
+            </div>
+            <span className="module-tag">{m.tag}</span>
+            <span className="module-pulse" />
+          </motion.div>
+        ))}
+      </div>
+
+      <motion.div className="modules-server"
+        initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }}
+        viewport={{ once: true }} transition={{ delay: 0.9, duration: 0.6, ease: "backOut" }}
+      >
+        <div className="server-head">
+          <span className="live-dot live-dot-green" />
+          <span className="server-t">Production</span>
+        </div>
+        <div className="server-body">
+          <span className="server-region">us-east-1</span>
+          <div className="server-bars">
+            {[70, 92, 54, 78, 88].map((h, i) => (
+              <motion.i key={i} initial={{ scaleY: 0 }} whileInView={{ scaleY: 1 }}
+                viewport={{ once: true }} transition={{ delay: 1 + i * 0.06, duration: 0.4 }}
+                style={{ height: `${h}%`, transformOrigin: "bottom" }}
+              />
+            ))}
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.span className="modules-badge"
+        initial={{ opacity: 0, y: 6 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 1.2 }}
+      >
+        <span className="live-dot live-dot-green" /> Deployed 2m ago
       </motion.span>
     </div>
   );
