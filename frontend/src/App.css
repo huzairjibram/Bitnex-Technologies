@@ -22,7 +22,7 @@
   @keyframes riseIn{to{opacity:1;transform:translateY(0)}}
 
   .in-view.section-intro,.in-view.cap-card,.in-view.process-step,.in-view.work-feature,.in-view.work-side,.in-view.why-item,.in-view.insight-card{opacity:1;transform:translateY(0)}
-  .section-intro,.cap-card,.process-step,.work-feature,.work-side,.why-item,.insight-card{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.22,.8,.28,1)}
+  /* framer-motion handles reveal now; keep transition for hover-lift only */
   .in-view .cap-card:nth-child(2),.in-view .process-step:nth-child(2),.in-view .why-item:nth-child(2){transition-delay:.08s}
   .in-view .cap-card:nth-child(3),.in-view .process-step:nth-child(3),.in-view .why-item:nth-child(3){transition-delay:.16s}
   .in-view .process-step:nth-child(4),.in-view .why-item:nth-child(4){transition-delay:.24s}
@@ -112,3 +112,94 @@
 .brand-tech{color:var(--teal);font-style:normal;font-weight:700;margin-left:6px;font-size:9.5px;letter-spacing:.2em}
 @media (max-width:900px){.brand-tech{display:none}}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* === Animated headline (word reveal) === */
+.hero-title,.section-intro h2,.why-heading h2,.contact-header h2,.insights-inner h2,.ai-copy h2{overflow:visible;letter-spacing:-.045em}
+.word-wrap{display:inline-flex;overflow:hidden;line-height:1.02;vertical-align:top}
+.word{display:inline-block;will-change:transform,opacity}
+.word.accent{color:var(--teal)}
+.hero-title{font-size:clamp(42px,5.5vw,80px);line-height:1.02;margin:27px 0 28px;max-width:820px}
+.section-intro h2,.why-heading h2,.insights-inner h2,.contact-header h2,.ai-copy h2{display:block;font-size:clamp(38px,4.5vw,62px);line-height:1.05;margin:20px 0}
+.ai-copy h2.dark{color:#fff}
+
+/* === Aurora background === */
+.aurora{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.aurora-blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.55;mix-blend-mode:normal}
+.aurora .a1{width:520px;height:520px;background:radial-gradient(circle,#14B8B8 0%,transparent 70%);top:-160px;right:-120px;animation:auroraA 18s ease-in-out infinite}
+.aurora .a2{width:420px;height:420px;background:radial-gradient(circle,#7DD8D8 0%,transparent 70%);bottom:-100px;left:-80px;opacity:.35;animation:auroraB 22s ease-in-out infinite}
+.aurora .a3{width:300px;height:300px;background:radial-gradient(circle,#8EE0C6 0%,transparent 70%);top:50%;left:35%;opacity:.28;animation:auroraC 26s ease-in-out infinite}
+.aurora-noise{position:absolute;inset:0;background-image:radial-gradient(rgba(0,0,0,.035) 1px,transparent 1px);background-size:3px 3px;opacity:.6}
+[data-theme=dark] .aurora .a1{opacity:.35}
+[data-theme=dark] .aurora .a2{opacity:.25}
+[data-theme=dark] .aurora .a3{opacity:.22}
+@keyframes auroraA{50%{transform:translate(-40px,60px) scale(1.1)}}
+@keyframes auroraB{50%{transform:translate(60px,-40px) scale(1.15)}}
+@keyframes auroraC{50%{transform:translate(-80px,40px) scale(.9)}}
+
+/* === Cursor spotlight === */
+.cursor-spot{position:fixed;top:0;left:0;width:520px;height:520px;margin:-260px 0 0 -260px;background:radial-gradient(circle,color-mix(in srgb,var(--teal),transparent 82%) 0%,transparent 62%);pointer-events:none;z-index:1;mix-blend-mode:normal;border-radius:50%}
+@media (max-width:900px){.cursor-spot{display:none}}
+
+/* === Hero layer stacking === */
+.hero{position:relative;overflow:hidden;z-index:0;padding-top:70px;padding-bottom:100px}
+.hero::before{display:none}
+.hero-copy,.hero-visual{position:relative;z-index:2}
+
+/* === Marquee === */
+.marquee-band{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel);overflow:hidden;padding:22px 0}
+.marquee{display:flex;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.marquee-track{display:flex;gap:40px;white-space:nowrap;animation:mScroll 40s linear infinite;padding-left:40px}
+.marquee-item{display:inline-flex;align-items:center;gap:20px;font-family:"Plus Jakarta Sans",sans-serif;font-size:22px;font-weight:700;letter-spacing:-.03em;color:var(--ink)}
+.marquee-dot{color:var(--teal);font-size:12px}
+@keyframes mScroll{to{transform:translateX(-33.333%)}}
+
+/* === Stats band === */
+.stats-band{display:grid;grid-template-columns:repeat(4,1fr);gap:40px;padding-top:80px;padding-bottom:80px;border-bottom:1px solid var(--line)}
+.stat strong{display:block;font-size:clamp(38px,4.2vw,58px);letter-spacing:-.05em;line-height:1;font-weight:800;color:var(--ink);font-feature-settings:"tnum"}
+.stat span{display:block;margin-top:14px;color:var(--muted);font-size:13px;line-height:1.5;max-width:220px}
+@media (max-width:900px){.stats-band{grid-template-columns:1fr 1fr;gap:26px}}
+
+/* === Voice wave in assistant trigger === */
+.assistant-trigger .wave{display:inline-flex;align-items:end;gap:2px;height:16px;margin:0 6px}
+.assistant-trigger .wave i{display:block;width:2px;background:currentColor;height:6px;opacity:.85;animation:wv 1s ease-in-out infinite}
+.assistant-trigger .wave i:nth-child(2){animation-delay:.12s;height:11px}
+.assistant-trigger .wave i:nth-child(3){animation-delay:.24s;height:14px}
+.assistant-trigger .wave i:nth-child(4){animation-delay:.36s;height:9px}
+.assistant-trigger .wave i:nth-child(5){animation-delay:.48s;height:7px}
+@keyframes wv{50%{transform:scaleY(1.6)}}
+
+/* === Card glow effect === */
+.cap-card{position:relative;transform-style:preserve-3d;background:var(--panel)}
+.cap-card .cap-icon{color:var(--teal);display:inline-flex;padding:8px;border-radius:9px;background:color-mix(in srgb,var(--teal),transparent 90%);transition:transform .3s}
+.cap-card:hover .cap-icon{transform:rotate(-6deg) scale(1.08)}
+.card-glow{position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:linear-gradient(135deg,color-mix(in srgb,var(--teal),transparent 82%),transparent 40%);opacity:0;transition:opacity .4s}
+.cap-card:hover .card-glow{opacity:1}
+
+/* === Process step connecting line === */
+.proc-line{position:absolute;left:22px;right:0;top:22px;height:1px;background:linear-gradient(90deg,var(--teal) 0%,transparent 100%);opacity:.35}
+.process-step{position:relative;overflow:hidden}
+.process-step:last-child .proc-line{display:none}
+
+/* === Ecosystem ring 3 (inner) === */
+.eco-ring.r3{width:220px;height:220px;border-color:color-mix(in srgb,var(--teal),transparent 55%);animation-duration:20s}
+
+/* === Improve dark backdrop on scrolled header === */
+.site-header{transition:background .3s,border-color .3s,backdrop-filter .3s}
+.site-header-scrolled{background:color-mix(in srgb,var(--panel),transparent 8%);backdrop-filter:blur(22px) saturate(140%)}
+
+/* === Hero-rule shimmer === */
+.hero-rule{position:relative;overflow:hidden}
+.hero-rule i{position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--teal),transparent);animation:shimmer 2.4s ease-in-out infinite}
+@keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* === Reduce motion === */
+@media (prefers-reduced-motion: reduce){
+  .marquee-track,.aurora-blob,.eco-ring,.eco-node,.eco-bars i,.eco-lines path,.assistant-trigger .wave i,.hero-rule i{animation:none!important}
+  .word,.cursor-spot{animation:none!important}
+}
+
+/* === Section headings recolor accent === */
+.section-intro h2 em,.why-heading h2 em,.insights-inner h2 em,.contact-header h2 em,.ai-copy h2 em{color:var(--teal);font-style:normal}
+
+/* === Kill old .reveal opacity 0 that could still hide things now === */
+.reveal{opacity:1!important;transform:none!important}
