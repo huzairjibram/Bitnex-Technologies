@@ -528,6 +528,11 @@ async def portal_overview(user=Depends(current_user)):
     name_map = {str(p["_id"]): p["name"] for p in project_docs}
     task_docs = await db.tasks.find({"owner_id": user["id"]}).sort("created_at", -1).limit(6).to_list(6)
     invoice_docs = await db.invoices.find({"owner_id": user["id"]}).sort("created_at", -1).limit(6).to_list(6)
+    outstanding_agg = await db.invoices.aggregate([
+        {"$match": {"owner_id": user["id"], "status": {"$ne": "Paid"}}},
+        {"$group": {"_id": None, "total": {"$sum": "$amount"}}},
+    ]).to_list(1)
+    outstanding_total = float(outstanding_agg[0]["total"]) if outstanding_agg else 0.0
     activity_docs = await db.activity.find({"owner_id": user["id"]}).sort("created_at", -1).limit(6).to_list(6)
     return {
         "user": user,
@@ -545,7 +550,7 @@ async def portal_overview(user=Depends(current_user)):
             "projects": len(project_docs),
             "in_progress": sum(1 for p in project_docs if p.get("status") == "In progress"),
             "open_tasks": await db.tasks.count_documents({"owner_id": user["id"], "done": False}),
-            "outstanding": sum(float(i.get("amount", 0)) for i in invoice_docs if i.get("status") != "Paid"),
+            "outstanding": outstanding_total,
         },
     }
 
