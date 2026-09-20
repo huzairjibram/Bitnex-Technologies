@@ -922,11 +922,18 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
   const navigate = useNavigate();
   const submit = async e => {
     e.preventDefault();
     try { await axios.post(`${API}/auth/login`, { email, password }, { withCredentials: true }); navigate("/portal"); }
     catch (err) { setError(err.response?.data?.detail || "Unable to sign in"); }
+  };
+  const googleSignIn = () => {
+    // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    setBusy(true);
+    const redirectUrl = window.location.origin + "/portal";
+    window.location.href = `https://auth.emergentagent.com/?redirect=${encodeURIComponent(redirectUrl)}`;
   };
   return (
     <div className="auth-page">
@@ -939,16 +946,17 @@ function Login() {
         <span className="eyebrow">CLIENT PORTAL / SECURE ACCESS</span>
         <h1>Welcome back.</h1>
         <p>Sign in to follow projects, review milestones and keep the next step clear.</p>
+        <button type="button" className="button button-google full" onClick={googleSignIn} disabled={busy} data-testid="google-login-button">
+          <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.8-6.8C35.5 2.4 30.1 0 24 0 14.6 0 6.5 5.4 2.6 13.3l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.9 24.6c0-1.6-.2-3.2-.4-4.6H24v9.1h12.9c-.6 3-2.3 5.6-4.9 7.3l7.6 5.9c4.4-4.1 6.9-10 6.9-17.7z"/><path fill="#FBBC05" d="M10.5 28.6c-.5-1.5-.8-3.1-.8-4.6s.3-3.1.8-4.6L2.6 13.3C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.8-5.8l-7.6-5.9c-2.1 1.4-4.8 2.3-8.2 2.3-6.3 0-11.6-4.1-13.5-9.9l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+          {busy ? "Redirecting…" : "Continue with Google"}
+        </button>
+        <div className="auth-divider"><span>or continue with email</span></div>
         <form onSubmit={submit} data-testid="login-form">
           <label>Email<input type="email" value={email} onChange={e => setEmail(e.target.value)} required data-testid="login-email-input" /></label>
           <label>Password<input type="password" value={password} onChange={e => setPassword(e.target.value)} required data-testid="login-password-input" /></label>
           {error && <div className="form-error" data-testid="login-error">{error}</div>}
           <button className="button button-blue full" data-testid="login-submit-button">Sign in <ArrowRight size={16} /></button>
         </form>
-        <div className="auth-alt">
-          <button data-testid="magic-link-button" onClick={() => setError("Magic-link access will be connected when email delivery is enabled.")}>Send a magic link</button>
-          <button data-testid="google-login-button" onClick={() => setError("Google sign-in will be connected after OAuth credentials are configured.")}>Continue with Google</button>
-        </div>
         <span className="auth-note">Need access? Contact hello@bitnextechnologies.com</span>
       </motion.div>
     </div>
@@ -961,6 +969,7 @@ function Portal() {
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [newTask, setNewTask] = useState({ label: "", project_id: "" });
   const navigate = useNavigate();
+  const authProcessed = useRef(false);
 
   const refresh = async () => {
     try {
@@ -968,7 +977,27 @@ function Portal() {
       setData(r.data);
     } catch { navigate("/portal/login"); }
   };
-  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  // REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+  useEffect(() => {
+    const boot = async () => {
+      const hash = window.location.hash || "";
+      if (hash.includes("session_id=") && !authProcessed.current) {
+        authProcessed.current = true;
+        const sessionId = new URLSearchParams(hash.replace(/^#/, "")).get("session_id");
+        try {
+          await axios.post(`${API}/auth/session`, {}, {
+            headers: { "X-Session-ID": sessionId },
+            withCredentials: true,
+          });
+          window.history.replaceState({}, document.title, "/portal");
+        } catch (e) { navigate("/portal/login"); return; }
+      }
+      refresh();
+    };
+    boot();
+    /* eslint-disable-next-line */
+  }, []);
 
   const toggleTask = async (t) => {
     await axios.patch(`${API}/portal/tasks/${t.id}`, { done: !t.done }, { withCredentials: true });

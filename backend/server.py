@@ -8,9 +8,11 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 from bson import ObjectId
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import bcrypt
 import jwt
+import httpx
+import secrets
 
 
 ROOT_DIR = Path(__file__).parent
@@ -118,6 +120,26 @@ def token_for(user_id, email, role="admin", kind="access"):
 
 
 async def current_user(request: Request):
+    # 1) Emergent-managed Google session (session_token cookie OR Authorization: Bearer)
+    session_token = request.cookies.get("session_token")
+    if not session_token:
+        auth = request.headers.get("Authorization", "")
+        if auth.startswith("Bearer ") and not auth[7:].count(".") == 2:
+            session_token = auth[7:]
+    if session_token:
+        session = await db.user_sessions.find_one({"session_token": session_token})
+        if session:
+            expires_at = session.get("expires_at")
+            if isinstance(expires_at, str):
+                expires_at = datetime.fromisoformat(expires_at)
+            if expires_at and expires_at.tzinfo is None:
+                expires_at = expires_at.replace(tzinfo=timezone.utc)
+            if expires_at and expires_at >= datetime.now(timezone.utc):
+                user = await db.users.find_one({"_id": ObjectId(session["user_id"])})
+                if user:
+                    return public_user(user)
+
+    # 2) Legacy JWT access_token cookie / bearer
     token = request.cookies.get("access_token")
     if not token:
         auth = request.headers.get("Authorization", "")
@@ -234,6 +256,8 @@ async def seed_admin_and_data():
         admin_id = str(existing["_id"])
 
     await db.users.create_index("email", unique=True)
+    await db.user_sessions.create_index("session_token", unique=True)
+    await db.user_sessions.create_index("expires_at", expireAfterSeconds=0)
     await db.intakes.create_index("created_at")
     await db.projects.create_index([("owner_id", 1), ("created_at", -1)])
     await db.tasks.create_index([("owner_id", 1), ("created_at", -1)])
@@ -323,10 +347,79 @@ async def me(user=Depends(current_user)):
     return user
 
 
+@api_router.post("/auth/session")
+async def emergent_session(request: Request, response: Response):
+    """Exchange an Emergent OAuth session_id for a persistent session_token.
+
+    REMINDER: DO NOT HARDCODE THE URL, OR ADD ANY FALLBACKS OR REDIRECT URLS, THIS BREAKS THE AUTH
+    """
+    session_id = request.headers.get("X-Session-ID")
+    if not session_id:
+        raise HTTPException(400, "Missing X-Session-ID header")
+    try:
+        async with httpx.AsyncClient(timeout=15) as client:
+            r = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id},
+            )
+    except httpx.HTTPError:
+        raise HTTPException(502, "Auth provider unreachable")
+    if r.status_code != 200:
+        raise HTTPException(401, "Invalid or expired Google session")
+    data = r.json()
+    email = (data.get("email") or "").lower()
+    if not email or not data.get("session_token"):
+        raise HTTPException(400, "Malformed session data")
+
+    existing = await db.users.find_one({"email": email})
+    if existing:
+        user_id = existing["_id"]
+        await db.users.update_one(
+            {"_id": user_id},
+            {"$set": {"name": data.get("name") or existing.get("name"), "picture": data.get("picture", "")}},
+        )
+        user = await db.users.find_one({"_id": user_id})
+    else:
+        result = await db.users.insert_one({
+            "name": data.get("name") or email.split("@")[0],
+            "email": email,
+            "password_hash": "",
+            "role": "client",
+            "auth_provider": "emergent-google",
+            "picture": data.get("picture", ""),
+            "created_at": now_iso(),
+        })
+        user_id = result.inserted_id
+        user = await db.users.find_one({"_id": user_id})
+
+    await db.user_sessions.insert_one({
+        "user_id": str(user_id),
+        "session_token": data["session_token"],
+        "email": email,
+        "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
+        "created_at": datetime.now(timezone.utc),
+    })
+
+    response.set_cookie(
+        "session_token",
+        data["session_token"],
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7 * 24 * 60 * 60,
+        path="/",
+    )
+    return public_user(user)
+
+
 @api_router.post("/auth/logout")
-async def logout(response: Response):
-    response.delete_cookie("access_token")
-    response.delete_cookie("refresh_token")
+async def logout(request: Request, response: Response):
+    session_token = request.cookies.get("session_token")
+    if session_token:
+        await db.user_sessions.delete_one({"session_token": session_token})
+    response.delete_cookie("access_token", path="/")
+    response.delete_cookie("refresh_token", path="/")
+    response.delete_cookie("session_token", path="/")
     return {"ok": True}
 
 
