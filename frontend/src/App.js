@@ -703,13 +703,48 @@ function Login() {
 
 function Portal() {
   const [data, setData] = useState(null);
+  const [showNewProject, setShowNewProject] = useState(false);
+  const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [newTask, setNewTask] = useState({ label: "", project_id: "" });
   const navigate = useNavigate();
-  useEffect(() => {
-    axios.get(`${API}/portal/overview`, { withCredentials: true })
-      .then(r => setData(r.data))
-      .catch(() => navigate("/portal/login"));
-  }, [navigate]);
+
+  const refresh = async () => {
+    try {
+      const r = await axios.get(`${API}/portal/overview`, { withCredentials: true });
+      setData(r.data);
+    } catch { navigate("/portal/login"); }
+  };
+  useEffect(() => { refresh(); /* eslint-disable-next-line */ }, []);
+
+  const toggleTask = async (t) => {
+    await axios.patch(`${API}/portal/tasks/${t.id}`, { done: !t.done }, { withCredentials: true });
+    refresh();
+  };
+  const removeTask = async (id) => {
+    await axios.delete(`${API}/portal/tasks/${id}`, { withCredentials: true });
+    refresh();
+  };
+  const addTask = async (e) => {
+    e.preventDefault();
+    if (!newTask.label.trim() || !newTask.project_id) return;
+    await axios.post(`${API}/portal/tasks`, newTask, { withCredentials: true });
+    setNewTask({ label: "", project_id: newTask.project_id });
+    refresh();
+  };
+  const removeProject = async (id) => {
+    if (!window.confirm("Delete this project and its tasks?")) return;
+    await axios.delete(`${API}/portal/projects/${id}`, { withCredentials: true });
+    refresh();
+  };
+  const setInvoiceStatus = async (id, status) => {
+    await axios.patch(`${API}/portal/invoices/${id}`, { status }, { withCredentials: true });
+    refresh();
+  };
+
   if (!data) return <div className="portal-loading" data-testid="portal-loading">Loading workspace…</div>;
+
+  const outstanding = (data.stats.outstanding || 0).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
   return (
     <div className="portal-page">
       <aside className="portal-sidebar">
@@ -718,9 +753,9 @@ function Portal() {
           <span className="brand-word">BITNEX</span>
         </Link>
         <div className="portal-label">WORKSPACE</div>
-        {[["Overview", PanelTop], ["Projects", Layers3], ["Tasks", ClipboardList], ["Files", FileText], ["Messages", Quote], ["Invoices", FileText]].map(([x, Icon], i) => (
+        {[["Overview", PanelTop, data.projects.length], ["Projects", Layers3, data.projects.length], ["Tasks", ClipboardList, data.stats.open_tasks], ["Files", FileText, 0], ["Messages", Quote, 0], ["Invoices", FileText, data.invoices.length]].map(([x, Icon, count], i) => (
           <button className={i === 0 ? "portal-nav active" : "portal-nav"} key={x} data-testid={`portal-nav-${x.toLowerCase()}`}>
-            <span><Icon size={16} /></span>{x}{i === 1 && <span className="nav-count">2</span>}
+            <span><Icon size={16} /></span>{x}{count > 0 && <span className="nav-count">{count}</span>}
           </button>
         ))}
         <div className="portal-side-bottom">
@@ -732,79 +767,202 @@ function Portal() {
       <main className="portal-main">
         <header className="portal-header">
           <div>
-            <span className="eyebrow">TUESDAY, 17 MARCH 2026</span>
-            <h1>Good morning, {data.user.name.split(" ")[0]}.</h1>
+            <span className="eyebrow">{new Date().toLocaleDateString("en-US", { weekday: "long", day: "2-digit", month: "long", year: "numeric" }).toUpperCase()}</span>
+            <h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, {data.user.name.split(" ")[0]}.</h1>
           </div>
           <div className="portal-user">
             <span>{data.user.name.charAt(0)}</span>
             <div><strong>{data.user.name}</strong><small>{data.user.role}</small></div>
           </div>
         </header>
+
+        <div className="portal-kpis">
+          <motion.div className="kpi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <span className="eyebrow">Projects</span><strong>{data.stats.projects}</strong><small>{data.stats.in_progress} in progress</small>
+          </motion.div>
+          <motion.div className="kpi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}>
+            <span className="eyebrow">Open tasks</span><strong>{data.stats.open_tasks}</strong><small>across your workspace</small>
+          </motion.div>
+          <motion.div className="kpi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.19 }}>
+            <span className="eyebrow">Outstanding</span><strong>${outstanding}</strong><small>on active invoices</small>
+          </motion.div>
+          <motion.div className="kpi" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}>
+            <span className="eyebrow">Activity</span><strong>{data.activity.length}</strong><small>recent updates</small>
+          </motion.div>
+        </div>
+
         <div className="portal-grid">
           <section className="portal-section projects-panel">
             <div className="portal-section-head">
               <div><span className="eyebrow">YOUR WORK</span><h2>Active projects</h2></div>
-              <button className="icon-button add-button" data-testid="new-project-button"><Plus size={18} /></button>
+              <button className="icon-button add-button" onClick={() => setShowNewProject(true)} data-testid="new-project-button"><Plus size={18} /></button>
             </div>
             <div className="project-list">
-              {data.projects.map(p => (
-                <article className="project-row" key={p.id} data-testid={`portal-project-${p.id}`}>
-                  <div className="project-icon"><Network size={19} /></div>
-                  <div className="project-info">
-                    <span className="eyebrow">{p.type}</span>
-                    <h3>{p.name}</h3>
-                    <div className="project-progress"><span><i style={{ width: `${p.progress}%` }}></i></span><small>{p.progress}% complete</small></div>
-                  </div>
-                  <div className="project-status">
-                    <span className={p.status === "In progress" ? "status-dot blue" : "status-dot green"}></span>{p.status}
-                    <small>Next: {p.next}</small>
-                  </div>
-                  <ArrowRight className="row-arrow" size={18} />
-                </article>
-              ))}
+              <AnimatePresence>
+                {data.projects.map(p => (
+                  <motion.article className="project-row" key={p.id} data-testid={`portal-project-${p.id}`}
+                    layout initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -20 }}
+                  >
+                    <div className="project-icon"><Network size={19} /></div>
+                    <div className="project-info">
+                      <span className="eyebrow">{p.type}</span>
+                      <h3>{p.name}</h3>
+                      <div className="project-progress">
+                        <span><motion.i initial={{ width: 0 }} animate={{ width: `${p.progress}%` }} transition={{ duration: 0.8 }} /></span>
+                        <small>{p.progress}% complete{p.due ? ` · Due ${p.due}` : ""}</small>
+                      </div>
+                    </div>
+                    <div className="project-status">
+                      <span className={p.status === "In progress" ? "status-dot blue" : p.status === "Completed" ? "status-dot green" : "status-dot"}></span>{p.status}
+                      <small>Next: {p.next || "—"}</small>
+                    </div>
+                    <button className="icon-button ghost" onClick={() => removeProject(p.id)} data-testid={`delete-project-${p.id}`} aria-label="Delete project"><X size={14} /></button>
+                  </motion.article>
+                ))}
+              </AnimatePresence>
+              {data.projects.length === 0 && (
+                <div className="empty-state">No projects yet. Create your first workspace project.</div>
+              )}
             </div>
           </section>
+
           <section className="portal-section activity-panel">
             <div className="portal-section-head">
               <div><span className="eyebrow">RECENTLY</span><h2>Activity</h2></div>
-              <button className="text-link" data-testid="activity-view-all">View all <ArrowRight size={14} /></button>
             </div>
-            {data.activity.map(a => (
-              <div className="activity-row" key={a.label}>
+            {data.activity.length === 0 ? (
+              <div className="empty-state small">Actions on your workspace show up here.</div>
+            ) : data.activity.map(a => (
+              <motion.div className="activity-row" key={a.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}>
                 <span className="activity-mark"><Check size={13} /></span>
-                <div><strong>{a.label}</strong><small>{a.project}</small></div>
+                <div><strong>{a.label}</strong>{a.project && <small>{a.project}</small>}</div>
                 <span className="activity-time">{a.time}</span>
-              </div>
+              </motion.div>
             ))}
           </section>
+
           <section className="portal-section tasks-panel">
             <div className="portal-section-head">
               <div><span className="eyebrow">NEXT UP</span><h2>Tasks</h2></div>
-              <button className="icon-button" data-testid="add-task-button"><Plus size={16} /></button>
             </div>
-            {data.tasks.map(t => (
-              <label className="task-row" key={t.label}>
-                <input type="checkbox" defaultChecked={t.done} data-testid={`task-${t.label.toLowerCase().replaceAll(" ", "-")}`} />
-                <span><strong>{t.label}</strong><small>{t.project}</small></span>
-              </label>
-            ))}
+            <form className="task-add" onSubmit={addTask} data-testid="task-add-form">
+              <select value={newTask.project_id} onChange={e => setNewTask({ ...newTask, project_id: e.target.value })} required data-testid="task-project-select">
+                <option value="">Select project…</option>
+                {data.projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+              <input value={newTask.label} onChange={e => setNewTask({ ...newTask, label: e.target.value })} placeholder="What needs to happen?" required data-testid="task-label-input" />
+              <button type="submit" className="icon-button add-button" data-testid="task-add-submit" aria-label="Add task"><Plus size={16} /></button>
+            </form>
+            <AnimatePresence>
+              {data.tasks.map(t => (
+                <motion.div className="task-row" key={t.id} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -12 }}>
+                  <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} data-testid={`task-toggle-${t.id}`} />
+                  <span><strong className={t.done ? "done" : ""}>{t.label}</strong><small>{t.project}</small></span>
+                  <button className="row-x" onClick={() => removeTask(t.id)} aria-label="Delete task" data-testid={`task-delete-${t.id}`}><X size={13} /></button>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            {data.tasks.length === 0 && <div className="empty-state small">No tasks yet.</div>}
           </section>
+
           <section className="portal-section invoices-panel">
             <div className="portal-section-head">
               <div><span className="eyebrow">FINANCE</span><h2>Invoices</h2></div>
-              <button className="text-link" data-testid="invoice-view-all">View all <ArrowRight size={14} /></button>
+              <button className="icon-button add-button" onClick={() => setShowNewInvoice(true)} data-testid="new-invoice-button"><Plus size={16} /></button>
             </div>
-            {data.invoices.map(i => (
-              <div className="invoice-row" key={i.label}>
+            {data.invoices.length === 0 ? (
+              <div className="empty-state small">Invoices you generate will land here.</div>
+            ) : data.invoices.map(i => (
+              <motion.div className="invoice-row" key={i.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} data-testid={`invoice-${i.id}`}>
                 <span className="invoice-icon"><FileText size={16} /></span>
-                <div><strong>{i.label}</strong><small>{i.status}</small></div>
-                <b>{i.amount}</b>
-              </div>
+                <div><strong>{i.label}</strong><small>{i.status}{i.project ? ` · ${i.project}` : ""}</small></div>
+                <b>{i.amount_display}</b>
+                {i.status !== "Paid" && (
+                  <button className="pay-button" onClick={() => setInvoiceStatus(i.id, "Paid")} data-testid={`invoice-pay-${i.id}`}>Mark paid</button>
+                )}
+              </motion.div>
             ))}
           </section>
         </div>
       </main>
+
+      <AnimatePresence>
+        {showNewProject && <NewProjectModal onClose={() => setShowNewProject(false)} onCreated={refresh} />}
+        {showNewInvoice && <NewInvoiceModal projects={data.projects} onClose={() => setShowNewInvoice(false)} onCreated={refresh} />}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function NewProjectModal({ onClose, onCreated }) {
+  const [form, setForm] = useState({ name: "", type: "SaaS delivery workspace", next: "Kickoff", due: "" });
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await axios.post(`${API}/portal/projects`, form, { withCredentials: true });
+      onCreated();
+      onClose();
+    } finally { setBusy(false); }
+  };
+  return (
+    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+      <motion.form className="modal" onClick={e => e.stopPropagation()} onSubmit={submit}
+        initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.98 }} data-testid="new-project-modal"
+      >
+        <div className="modal-head">
+          <span className="eyebrow">NEW PROJECT</span>
+          <h2>Start a workspace project</h2>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close" data-testid="modal-close"><X size={16} /></button>
+        </div>
+        <label>Project name<input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} required minLength={2} data-testid="modal-project-name" /></label>
+        <label>Type<select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} data-testid="modal-project-type">
+          {["SaaS delivery workspace", "Concept delivery workspace", "AI & Automation", "Commerce build", "Discovery & systems design", "Retainer engagement"].map(x => <option key={x}>{x}</option>)}
+        </select></label>
+        <div className="modal-row">
+          <label>Next step<input value={form.next} onChange={e => setForm({ ...form, next: e.target.value })} data-testid="modal-project-next" /></label>
+          <label>Due (optional)<input value={form.due} onChange={e => setForm({ ...form, due: e.target.value })} placeholder="e.g. Apr 30, 2026" data-testid="modal-project-due" /></label>
+        </div>
+        <button className="button button-blue full" disabled={busy} data-testid="modal-project-submit">{busy ? "Creating…" : "Create project"} <ArrowRight size={16} /></button>
+      </motion.form>
+    </motion.div>
+  );
+}
+
+function NewInvoiceModal({ projects, onClose, onCreated }) {
+  const [form, setForm] = useState({ label: "", amount: "", project_id: projects[0]?.id || "" });
+  const [busy, setBusy] = useState(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await axios.post(`${API}/portal/invoices`, { label: form.label, amount: parseFloat(form.amount), project_id: form.project_id || null }, { withCredentials: true });
+      onCreated();
+      onClose();
+    } finally { setBusy(false); }
+  };
+  return (
+    <motion.div className="modal-backdrop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}>
+      <motion.form className="modal" onClick={e => e.stopPropagation()} onSubmit={submit}
+        initial={{ opacity: 0, y: 20, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 10, scale: 0.98 }} data-testid="new-invoice-modal"
+      >
+        <div className="modal-head">
+          <span className="eyebrow">NEW INVOICE</span>
+          <h2>Draft an invoice</h2>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close" data-testid="modal-invoice-close"><X size={16} /></button>
+        </div>
+        <label>Line item<input value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} required data-testid="modal-invoice-label" /></label>
+        <div className="modal-row">
+          <label>Amount (USD)<input type="number" step="0.01" min="1" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} required data-testid="modal-invoice-amount" /></label>
+          <label>Project<select value={form.project_id} onChange={e => setForm({ ...form, project_id: e.target.value })} data-testid="modal-invoice-project">
+            <option value="">— None —</option>
+            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select></label>
+        </div>
+        <button className="button button-blue full" disabled={busy} data-testid="modal-invoice-submit">{busy ? "Saving…" : "Save invoice"} <ArrowRight size={16} /></button>
+      </motion.form>
+    </motion.div>
   );
 }
 
