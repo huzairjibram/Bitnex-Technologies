@@ -301,6 +301,171 @@ const capabilities = [
 
 const marqueeItems = ["AI Agents", "Voice AI", "SaaS Engineering", "Automation", "Cloud Architecture", "Commerce", "Custom Software", "Integrations", "Product Design", "Business Operations"];
 
+// Small inline visual for SaaS bento card
+function BuildingBlocks() {
+  return (
+    <div className="blocks" aria-hidden="true">
+      {[0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+        <motion.span key={i} className={cx("block", (i === 1 || i === 4 || i === 5 || i === 7) && "block-teal")}
+          initial={{ opacity: 0, scale: 0.4 }} whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }} transition={{ delay: i * 0.05 + 0.2, duration: 0.5 }}
+        />
+      ))}
+      <motion.span className="blocks-badge" initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.9 }}>
+        <span className="live-dot live-dot-green" /> 42 services live
+      </motion.span>
+    </div>
+  );
+}
+
+// Inline visual for commerce bento
+function CommerceTiles() {
+  return (
+    <div className="tiles" aria-hidden="true">
+      {["Discovery", "Cart", "Checkout"].map((t, i) => (
+        <motion.div key={t} className={cx("tile", i === 1 && "tile-active")}
+          initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.15 * i, duration: 0.6 }}
+        >
+          <strong>0{i + 1}</strong>
+          <span>{t}</span>
+          <em>+{[12, 24, 18][i]}%</em>
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+/* ====================  HERO PRODUCT MOCKUPS (Vercel/Supabase-style)  ==================== */
+
+// Grid mesh + animated gradient blobs for hero background
+function HeroMesh() {
+  return (
+    <div className="hero-mesh" aria-hidden="true">
+      <svg className="mesh-grid" width="100%" height="100%" preserveAspectRatio="none">
+        <defs>
+          <pattern id="gridp" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M60 0 L0 0 0 60" fill="none" stroke="#ffffff10" strokeWidth="1" />
+          </pattern>
+          <radialGradient id="meshGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#14B8B8" stopOpacity="0.35" />
+            <stop offset="100%" stopColor="#14B8B8" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#gridp)" />
+        <ellipse cx="72%" cy="35%" rx="360" ry="280" fill="url(#meshGlow)">
+          <animate attributeName="cx" values="72%;68%;72%" dur="14s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="18%" cy="72%" rx="280" ry="220" fill="url(#meshGlow)" opacity="0.5">
+          <animate attributeName="cy" values="72%;66%;72%" dur="16s" repeatCount="indefinite" />
+        </ellipse>
+      </svg>
+      <div className="mesh-scan" />
+    </div>
+  );
+}
+
+// Live-looking product dashboard (replaces the ecosystem in hero)
+function DashboardMockup() {
+  return (
+    <div className="mockup" data-testid="hero-dashboard-mockup">
+      <div className="mockup-window">
+        <div className="mockup-chrome">
+          <span className="dot d1" /><span className="dot d2" /><span className="dot d3" />
+          <span className="mockup-url">bitnex.dev / <em>workspace</em></span>
+          <span className="mockup-live"><span className="live-dot live-dot-green" /> LIVE</span>
+        </div>
+        <div className="mockup-body">
+          <aside className="mockup-side">
+            {[Sparkles, Layers3, Zap, Cloud, Radio].map((I, i) => (
+              <span className={cx("mockup-side-item", i === 0 && "active")} key={i}><I size={14} /></span>
+            ))}
+          </aside>
+          <div className="mockup-main">
+            <div className="mockup-topline">
+              <div><span className="mono-label">02 / TODAY</span><strong>Signals in motion.</strong></div>
+              <div className="mockup-pill"><span className="live-dot live-dot-green" /> 12 agents online</div>
+            </div>
+            <div className="mockup-cards">
+              <motion.div className="mockup-card mc1" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+                <span className="mono-label">Automations</span>
+                <strong>1,284<em>+18%</em></strong>
+                <svg viewBox="0 0 120 40" className="mockup-spark" preserveAspectRatio="none">
+                  <motion.path d="M0 30 L20 22 L40 26 L60 12 L80 18 L100 8 L120 14" fill="none" stroke="#14B8B8" strokeWidth="2"
+                    initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1, duration: 1.4 }}
+                  />
+                </svg>
+              </motion.div>
+              <motion.div className="mockup-card mc2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.95 }}>
+                <span className="mono-label">Pipeline health</span>
+                <div className="mockup-bars">
+                  {[62, 74, 48, 88, 54, 92, 70, 82].map((h, i) => (
+                    <motion.i key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }} transition={{ delay: 1.1 + i * 0.06, duration: 0.5 }} />
+                  ))}
+                </div>
+                <small>Uptime <em>99.94%</em></small>
+              </motion.div>
+              <motion.div className="mockup-card mc3" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.1 }}>
+                <span className="mono-label">Latency</span>
+                <strong className="lat">128<i>ms</i></strong>
+                <div className="mockup-progress"><motion.i initial={{ width: 0 }} animate={{ width: "72%" }} transition={{ delay: 1.3, duration: 1 }} /></div>
+              </motion.div>
+            </div>
+            <motion.div className="mockup-stream" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 }}>
+              {[
+                { t: "Agent • Support", m: "Resolved refund request in 1.2s" },
+                { t: "Workflow • Sync", m: "3 CRM records reconciled" },
+                { t: "Signal • Commerce", m: "Recommendation model updated" },
+              ].map((r, i) => (
+                <motion.div key={i} className="stream-row" initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 1.5 + i * 0.15 }}>
+                  <span className="stream-dot" /><span className="stream-t">{r.t}</span><span className="stream-m">{r.m}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
+        </div>
+      </div>
+      {/* Floating cursor from a "collaborator" */}
+      <motion.div className="mockup-cursor" initial={{ x: 40, y: 200 }} animate={{ x: [40, 240, 180, 60], y: [200, 60, 260, 200] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}>
+        <svg width="20" height="22" viewBox="0 0 20 22"><path d="M2 2 L18 12 L11 13 L14 19 L11 20 L8 14 L2 18 Z" fill="#14B8B8" stroke="#0a1517" strokeWidth="1" /></svg>
+        <span>Nex</span>
+      </motion.div>
+      {/* Floating node pills orbiting the mockup */}
+      <motion.span className="orbit-pill op1" animate={{ y: [0, -8, 0] }} transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}><Sparkles size={12} /> AI Agents</motion.span>
+      <motion.span className="orbit-pill op2" animate={{ y: [0, -6, 0] }} transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}><Zap size={12} /> Automation</motion.span>
+      <motion.span className="orbit-pill op3" animate={{ y: [0, -7, 0] }} transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 0.8 }}><Cloud size={12} /> Cloud</motion.span>
+    </div>
+  );
+}
+
+// Terminal / code preview (Supabase-style) for capabilities bento
+function CodePreview() {
+  const [line, setLine] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setLine(l => (l + 1) % 4), 1600);
+    return () => clearInterval(t);
+  }, []);
+  const lines = [
+    { p: "$", c: "npx create-bitnex-agent support" },
+    { p: ">", c: "→ Wiring CRM · Zendesk · Slack" },
+    { p: ">", c: "→ Training on 1,284 tickets" },
+    { p: "✓", c: "Agent deployed · latency 128ms" },
+  ];
+  return (
+    <div className="code-preview" data-testid="code-preview">
+      <div className="code-head"><span className="dot d1" /><span className="dot d2" /><span className="dot d3" /><span className="code-title">agent.deploy.ts</span></div>
+      <div className="code-body">
+        {lines.map((l, i) => (
+          <div className={cx("code-line", i <= line && "shown")} key={i}>
+            <span className="code-prompt">{l.p}</span>
+            <span>{l.c}</span>
+            {i === line && <span className="code-caret" />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ====================  HOME  ==================== */
 
 function Home({ theme, setTheme }) {
@@ -315,13 +480,14 @@ function Home({ theme, setTheme }) {
     <>
       <Header theme={theme} setTheme={setTheme} />
       <main>
-        {/* HERO */}
-        <section className="hero page-pad" ref={heroRef}>
+        {/* HERO — cinematic dark */}
+        <section className="hero hero-dark page-pad" ref={heroRef}>
+          <HeroMesh />
           <AuroraBG />
           <CursorSpotlight />
           <motion.div className="hero-copy" style={{ y: heroTextY }}>
-            <motion.span className="eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              AI <i>•</i> SOFTWARE <i>•</i> AUTOMATION <i>•</i> COMMERCE
+            <motion.span className="eyebrow eyebrow-light" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+              <span className="live-dot live-dot-green" /> AI <i>•</i> SOFTWARE <i>•</i> AUTOMATION <i>•</i> COMMERCE
             </motion.span>
             <AnimatedHeadline text="We build technology that moves businesses" accent="forward." className="hero-title" />
             <motion.p className="hero-lede" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.9, duration: 0.8 }}>
@@ -332,7 +498,7 @@ function Home({ theme, setTheme }) {
                 <span>Start a project</span>
                 <ArrowRight size={16} />
               </MagneticButton>
-              <a href="#capabilities" className="text-link" data-testid="hero-capabilities-link">Explore capabilities <ArrowUpRight size={16} /></a>
+              <a href="#capabilities" className="text-link text-link-light" data-testid="hero-capabilities-link">Explore capabilities <ArrowUpRight size={16} /></a>
             </motion.div>
             <motion.div className="hero-foot" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3, duration: 0.7 }}>
               <span className="mono-label">SCROLL TO EXPLORE</span>
@@ -341,7 +507,7 @@ function Home({ theme, setTheme }) {
             </motion.div>
           </motion.div>
           <motion.div className="hero-visual" style={{ y: ecoY, scale: ecoScale }}>
-            <Ecosystem />
+            <DashboardMockup />
           </motion.div>
         </section>
 
@@ -363,28 +529,60 @@ function Home({ theme, setTheme }) {
           ))}
         </section>
 
-        {/* CAPABILITIES */}
+        {/* CAPABILITIES — BENTO */}
         <section id="capabilities" className="section page-pad">
           <SectionIntro eyebrow="01 / What we build" title="Technology, intelligence and operations" accent="in sync." copy="Focus where it matters. Build the systems that make work clearer, faster and more connected." />
-          <div className="cap-grid">
-            {capabilities.map(({ icon: Icon, ...c }, i) => (
-              <motion.div key={c.num}
-                initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }} transition={{ delay: i * 0.12, duration: 0.7, ease: [0.22, 0.8, 0.28, 1] }}
-              >
-                <TiltCard className="cap-card" data-testid={`capability-${c.num}`}>
-                  <div className="cap-top">
-                    <span className="card-num">{c.num}</span>
-                    <span className="cap-icon"><Icon size={22} /></span>
-                  </div>
-                  <h3>{c.title}</h3>
-                  <p>{c.copy}</p>
-                  <ul>{c.items.map(x => <li key={x}><Check size={14} />{x}</li>)}</ul>
-                  <a href="#contact" className="card-link" data-testid={`capability-${c.num}-link`}>Explore capability <ArrowRight size={15} /></a>
-                  <span className="card-glow" aria-hidden="true" />
-                </TiltCard>
-              </motion.div>
-            ))}
+          <div className="bento">
+            {/* BIG CARD */}
+            <motion.div className="bento-cell bento-main"
+              initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ duration: 0.8 }}
+              data-testid="capability-01"
+            >
+              <div className="bento-inner">
+                <div className="bento-copy">
+                  <span className="card-num">01</span>
+                  <span className="cap-icon"><Sparkles size={22} /></span>
+                  <h3>AI &amp; Automation</h3>
+                  <p>Intelligent systems that reduce repetitive work, connect workflows and improve customer experiences — from voice agents to full business automation.</p>
+                  <ul>{["AI agents", "Voice & conversational AI", "Workflow automation", "CRM integrations"].map(x => <li key={x}><Check size={14} />{x}</li>)}</ul>
+                  <a href="#contact" className="card-link" data-testid="capability-01-link">Explore capability <ArrowRight size={15} /></a>
+                </div>
+                <div className="bento-visual"><CodePreview /></div>
+              </div>
+              <span className="card-glow" aria-hidden="true" />
+            </motion.div>
+            {/* MEDIUM 02 */}
+            <motion.div className="bento-cell bento-med"
+              initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ delay: 0.12, duration: 0.8 }}
+              data-testid="capability-02"
+            >
+              <div className="bento-copy">
+                <span className="card-num">02</span>
+                <span className="cap-icon"><Code2 size={22} /></span>
+                <h3>Software &amp; SaaS</h3>
+                <p>Platforms and products engineered around real operating requirements — from sketch to production.</p>
+                <ul>{["SaaS development", "Web & mobile apps", "APIs & integrations", "Cloud architecture"].map(x => <li key={x}><Check size={14} />{x}</li>)}</ul>
+                <a href="#contact" className="card-link" data-testid="capability-02-link">Explore capability <ArrowRight size={15} /></a>
+              </div>
+              <BuildingBlocks />
+              <span className="card-glow" aria-hidden="true" />
+            </motion.div>
+            {/* MEDIUM 03 */}
+            <motion.div className="bento-cell bento-med"
+              initial={{ opacity: 0, y: 40 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-60px" }} transition={{ delay: 0.22, duration: 0.8 }}
+              data-testid="capability-03"
+            >
+              <div className="bento-copy">
+                <span className="card-num">03</span>
+                <span className="cap-icon"><PanelTop size={22} /></span>
+                <h3>Commerce &amp; Experiences</h3>
+                <p>Journeys where discovery, purchase and support feel like one connected system.</p>
+                <ul>{["Custom storefronts", "Customer portals", "AI recommendations", "Payments & integrations"].map(x => <li key={x}><Check size={14} />{x}</li>)}</ul>
+                <a href="#contact" className="card-link" data-testid="capability-03-link">Explore capability <ArrowRight size={15} /></a>
+              </div>
+              <CommerceTiles />
+              <span className="card-glow" aria-hidden="true" />
+            </motion.div>
           </div>
         </section>
 
