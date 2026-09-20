@@ -22,8 +22,8 @@ API = f"{BASE_URL}/api"
 MONGO_URL = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 DB_NAME = os.environ.get('DB_NAME', 'test_database')
 
-ADMIN_EMAIL = "admin@bitnextechnologies.com"
-ADMIN_PASSWORD = "BitNexPortal2026!"
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@bitnextechnologies.com')
+ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 
 
 @pytest.fixture(scope="module")

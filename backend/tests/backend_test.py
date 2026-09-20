@@ -3,11 +3,11 @@ import os
 import pytest
 import requests
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://platform-core-48.preview.emergentagent.com').rstrip('/')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'http://localhost:8001').rstrip('/')
 API = f"{BASE_URL}/api"
 
-ADMIN_EMAIL = "admin@bitnextechnologies.com"
-ADMIN_PASSWORD = "BitNexPortal2026!"
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@bitnextechnologies.com')
+ADMIN_PASSWORD = os.environ['ADMIN_PASSWORD']
 
 
 @pytest.fixture(scope="module")
@@ -90,18 +90,18 @@ def test_create_task(session, created_ids):
     assert r.status_code == 200
     t = r.json()
     assert t["label"] == "TEST_Task_1"
-    assert t["done"] is False
+    assert t["done"] == False
     created_ids["tasks"].append(t["id"])
 
 def test_toggle_task(session, created_ids):
     tid = created_ids["tasks"][0]
     r = session.patch(f"{API}/portal/tasks/{tid}", json={"done": True})
     assert r.status_code == 200
-    assert r.json()["done"] is True
+    assert r.json()["done"] == True
     # verify persistence
     r2 = session.get(f"{API}/portal/tasks")
     task = next(x for x in r2.json() if x["id"] == tid)
-    assert task["done"] is True
+    assert task["done"] == True
 
 
 # --- Invoices CRUD ---
