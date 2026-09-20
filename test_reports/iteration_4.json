@@ -1,0 +1,26 @@
+{
+  "summary": "Focused validation of the Emergent-managed Google auth integration on top of the existing Portal. Backend: 8/8 pytest tests pass in /app/backend/tests/test_google_auth.py — POST /api/auth/session returns 400 when X-Session-ID header is missing and 401 with detail 'Invalid or expired Google session' for an invalid id; a Mongo-seeded row in user_sessions authenticates /api/auth/me and /api/portal/overview via both cookie 'session_token' and Authorization: Bearer <non-JWT>; expired sessions (expires_at in past) → 401; POST /api/auth/logout deletes the user_sessions row and subsequent /api/auth/me → 401; legacy email/password JWT login regression passes. Frontend: /portal/login shows the 'Continue with Google' button (data-testid=google-login-button); clicking it navigates to https://auth.emergentagent.com/?redirect=<url-encoded window.location.origin>/portal — redirect param is dynamically derived from origin (no hardcoded value). Email/password login with admin@bitnextechnologies.com still lands on /portal and shows KPIs. Visiting /portal#session_id=INVALID_TEST_ID_123 correctly calls POST /api/auth/session (401 observed in the network response), then the callback effect calls navigate('/portal/login') — user lands on /portal/login (does not remain stuck on callback state). useRef guard prevents double POSTs under StrictMode.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_google_auth.py",
+    "/app/backend/tests/backend_test.py",
+    "/app/test_reports/pytest/google_auth_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "server.py current_user() bearer detection uses `not auth[7:].count('.') == 2` to distinguish session_token from JWT. This is a reasonable heuristic but any bearer with exactly 2 dots that isn't a valid JWT will fall through to the JWT decode path — acceptable for now, but consider trying both paths on failure or namespacing tokens.",
+    "The session cookie is set with samesite='none'; secure=True — correct for the cross-site OAuth callback flow, but the legacy access_token cookie uses samesite='lax'. If in the future you serve login from a different origin, the legacy cookie won't be sent — worth documenting.",
+    "/api/auth/session inserts a NEW user_sessions row on every successful exchange. If the same user re-authenticates repeatedly the collection will grow (TTL index cleans up after 7 days). Consider upsert on user_id or session_token to keep only the latest.",
+    "Overview.stats.outstanding still iterates via a $ne:'Paid' aggregate (fine) but 'invoices' in the overview response is limited to 6 — front-end may want the full list on the Invoices tab (already handled by separate endpoint).",
+    "Frontend Portal boot effect calls refresh() unconditionally after processing a hash. If the /api/auth/session POST succeeds but Set-Cookie is blocked by browser policy, refresh() will 401 and navigate to /portal/login — good fail-closed behaviour, but there's no user-visible error toast if the session exchange itself succeeds and only the cookie write is blocked (edge case)."
+  ],
+  "updated_files": ["/app/backend/tests/test_google_auth.py"],
+  "success_rate": {"backend": "100% (8/8 new google-auth + 16/16 existing portal)", "frontend": "100% of listed scenarios"},
+  "test_credentials": "admin@bitnextechnologies.com / BitNexPortal2026!; Google flow simulated by inserting TEST_sess_* rows in test_database.user_sessions",
+  "seed_data_creation": "Tests create ephemeral TEST_sess_*, TEST_expired_*, TEST_logout_* rows in user_sessions collection and delete them in fixtures/finally blocks. No permanent test data left.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Google/Emergent OAuth cannot be exercised end-to-end (no real session_id available); simulate by inserting a user_sessions row directly (fields: user_id (str of admin _id), session_token, email, expires_at (aware UTC), created_at). current_user() accepts session_token via cookie OR Authorization: Bearer for tokens that are not 2-dot JWTs. Legacy JWT login remains fully functional. Frontend selectors: google-login-button on /portal/login redirects to https://auth.emergentagent.com/?redirect=<origin>/portal; Portal component has useRef-guarded callback effect that consumes window.location.hash 'session_id=' and posts to /api/auth/session before /portal/overview.",
+  "rca of the issue": "N/A — no failures reported."
+}
